@@ -7,9 +7,10 @@ class DataCleaner:
 
     This class handles TTS-specific data cleaning operations independent of the modeling pipeline.
 
+
     """
 
-    def __init__(self, config_min_target_value=10,config_high_cardinality_threshold=0.05):
+    def __init__(self, config_min_target_value=10, config_high_cardinality_threshold=0.05):
         """
         Initialize the DataCleaner with configuration parameters.
 
@@ -83,7 +84,7 @@ class DataCleaner:
             elif df[col].dtype == 'object':
                 try:
                     df[col] = pd.to_numeric(df[col], errors='coerce')
-                except:
+                except Exception:
                     df[col] = df[col].astype('category')
         return df
 
@@ -124,6 +125,10 @@ class DataCleaner:
         pd.DataFrame 
             Cleaned dataframe with high-cardinality columns dropped.
         """
+        if len(df) == 0:
+            print("Warning: Dataframe is empty. Skipping high-cardinality column drop.")
+            return df
+        
         unique_proportions = df.nunique() / len(df)
 
         cols_to_drop = unique_proportions[unique_proportions > self.config_high_cardinality_threshold].index
@@ -133,7 +138,7 @@ class DataCleaner:
 
         return df
     
-    def clean(self, target_col='total_installed_price', min_target_value=10):
+    def clean(self, target_col='total_installed_price'):
         """
         Perform all cleaning steps on the loaded dataframe.
 
