@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+
 class DataCleaner:
     """
     Data cleaner for LBNL Tracking the Sun dataset.
@@ -111,7 +112,7 @@ class DataCleaner:
         print(f"> Removed {before_count - after_count} rows with missing or invalid target values.")
         return df
     
-    def _drop_majority_na_columns(self, df):
+    def _drop_high_na_columns(self, df):
         """
         Drop columns that have a majority of missing values based on configured thresholds.
 
@@ -123,11 +124,11 @@ class DataCleaner:
         Returns
         -------
         pd.DataFrame
-            Cleaned dataframe with majority-NA columns dropped.
+            Cleaned dataframe with high-NA columns dropped.
         """
 
         if len(df) == 0:
-            print("Warning: Dataframe is empty. Skipping majority-NA column drop.")
+            print("Warning: Dataframe is empty. Skipping high-NA column drop.")
             return df
         
         string_cols = df.select_dtypes(include=['object']).columns
@@ -201,6 +202,6 @@ class DataCleaner:
         self.df = self._make_true_na(self.df)
         self.df = self._clean_by_target(self.df, target_col)
         self.df = self._coerce_datatypes(self.df)
-        self.df = self._drop_majority_na_columns(self.df)
+        self.df = self._drop_high_na_columns(self.df)
         self.df = self._drop_high_cardinality_columns(self.df)
         return self.df
