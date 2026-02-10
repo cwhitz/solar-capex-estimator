@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-
 class DataCleaner:
     """
     Data cleaner for LBNL Tracking the Sun dataset.
@@ -10,7 +9,7 @@ class DataCleaner:
 
     """
 
-    def __init__(self, config_min_target_value=10, config_high_cardinality_threshold=0.05):
+    def __init__(self, config_min_target_value=10, config_high_cardinality_threshold=0.05, config_na_drop_thresholds={'string_columns': 0.20, 'numeric_columns': 0.50}):
         """
         Initialize the DataCleaner with configuration parameters.
 
@@ -26,6 +25,7 @@ class DataCleaner:
 
         self.config_min_target_value = config_min_target_value
         self.config_high_cardinality_threshold = config_high_cardinality_threshold
+        self.config_na_drop_thresholds = config_na_drop_thresholds
 
     def load_data(self, df):
         """
@@ -81,11 +81,11 @@ class DataCleaner:
             elif "zip" in col.lower() or "postal" in col.lower():
                 df[col] = df[col].astype(str).str.zfill(5)
 
-            elif df[col].dtype == 'object':
+            elif df[col].dtype in ['object', 'str']:
                 try:
-                    df[col] = pd.to_numeric(df[col], errors='coerce')
+                    df[col] = pd.to_numeric(df[col])
                 except Exception:
-                    df[col] = df[col].astype('category')
+                    df[col] = df[col].astype('str')
         return df
 
     def _clean_by_target(self, df, target_col):
@@ -110,6 +110,42 @@ class DataCleaner:
         after_count = len(df)
         print(f"> Removed {before_count - after_count} rows with missing or invalid target values.")
         return df
+    
+    def _drop_majority_na_columns(self, df):
+        """
+        Drop columns that have a majority of missing values based on configured thresholds.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Dataframe to clean.
+
+        Returns
+        -------
+        pd.DataFrame
+            Cleaned dataframe with majority-NA columns dropped.
+        """
+
+        if len(df) == 0:
+            print("Warning: Dataframe is empty. Skipping majority-NA column drop.")
+            return df
+        
+        string_cols = df.select_dtypes(include=['object']).columns
+        numeric_cols = df.select_dtypes(include=[np.number]).columns
+
+        string_na_proportions = df[string_cols].isna().mean()
+        numeric_na_proportions = df[numeric_cols].isna().mean()
+
+        cols_to_drop_string = string_na_proportions[string_na_proportions > self.config_na_drop_thresholds['string_columns']].index
+        cols_to_drop_numeric = numeric_na_proportions[numeric_na_proportions > self.config_na_drop_thresholds['numeric_columns']].index
+
+        cols_to_drop = list(cols_to_drop_string) + list(cols_to_drop_numeric)
+        print(f"> Dropping columns with majority NA values: {cols_to_drop}")
+        df = df.drop(columns=cols_to_drop)
+
+        return df
+
+
     
     def _drop_high_cardinality_columns(self, df):
         """
@@ -165,5 +201,6 @@ class DataCleaner:
         self.df = self._make_true_na(self.df)
         self.df = self._clean_by_target(self.df, target_col)
         self.df = self._coerce_datatypes(self.df)
+        self.df = self._drop_majority_na_columns(self.df)
         self.df = self._drop_high_cardinality_columns(self.df)
         return self.df
