@@ -10,20 +10,14 @@ class Preprocessor():
     Preprocessor for our Capex solar cost estimation model.
     """
 
-    def __init__(self, target_col='total_installed_price') -> None:
+    def __init__(self, target_col='total_installed_price'):
         """Initialize the Preprocessor with configuration parameters."""
         self.target_col = target_col
-        self.columns = dict(
-            target_col = target_col,
-            num_cols = [],
-            binary_cols = [],
-            cat_low_card_cols = [],
-            cat_high_card_cols = []
-        )
+        self.columns = None
 
         self.preprocessor = None
 
-    def _sort_columns(self, df: pd.DataFrame) -> None:
+    def _sort_columns(self, df: pd.DataFrame):
         """Sort columns into numerical, binary, low-cardinality categorical, and high-cardinality categorical based on datatypes and unique value counts.
         
         Parameters
@@ -31,6 +25,13 @@ class Preprocessor():
         df : pd.DataFrame
             Dataframe to use for determining column types.
         """
+        self.columns = dict(
+            target_col = self.target_col,
+            num_cols = [],
+            binary_cols = [],
+            cat_low_card_cols = [],
+            cat_high_card_cols = []
+        )
         
         for col in df.columns:
             if col == self.columns['target_col']:
@@ -48,7 +49,7 @@ class Preprocessor():
     def get_feature_names(self):
         """Get feature names after preprocessing"""
         if self.preprocessor is None:
-            raise ValueError("Preprocessor not built. Call build_preprocessor() first.")
+            raise ValueError("Preprocessor not built. Must be fit to data first.")
         return self.preprocessor.get_feature_names_out()
 
     def build_preprocessor(self, df):
