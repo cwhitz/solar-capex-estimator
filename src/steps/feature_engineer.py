@@ -41,9 +41,14 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
         return df
 
     def _add_day_count(self, df):
-        df['days_since_2000'] = (
-            df['installation_date'] - pd.Timestamp('2000-01-01')
-        ).dt.days
+        if 'installation_date' in df.columns:
+            if len(df) > 0:
+                df['days_since_2000'] = (
+                    df['installation_date'] - pd.Timestamp('2000-01-01')
+                ).dt.days
+            else:
+                # Create empty column for empty dataframe
+                df['days_since_2000'] = pd.Series(dtype='float64')
         return df
 
     def _combine_module_counts(self, df):
