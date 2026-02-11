@@ -45,8 +45,11 @@ class SolarCapexEstimator:
         engineered_data = engineer.engineer_features()
 
         # minimize engineered data to just features used in model
+        # ensure engineered features like 'days_since_2000' are retained
+        engineered_extra_features = ["days_since_2000"]
         engineered_data = engineered_data.filter(
             items=config["model_features"]["features"]
+            + engineered_extra_features
             + [config["model_features"]["target"]]
         )
 
