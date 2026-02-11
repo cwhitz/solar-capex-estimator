@@ -14,8 +14,8 @@ class DataCleaner:
     def __init__(
         self,
         min_target_value=10,
-        high_cardinality_threshold=0.05,
-        na_drop_thresholds={"string_columns": 0.20, "numeric_columns": 0.50},
+        high_cardinality_threshold=0.10,
+        na_drop_thresholds={"string_columns": 0.10, "numeric_columns": 0.50},
     ):
         """
         Initialize the DataCleaner with configuration parameters.
@@ -25,9 +25,9 @@ class DataCleaner:
         min_target_value : float, optional
             Minimum valid target value. Rows with target values below this will be removed. Default is 10.
         high_cardinality_threshold : float, optional
-            Proportion of unique values above which a column will be dropped. Default is 0.05 (5%).
+            Proportion of unique values above which a column will be dropped. Default is 0.10 (10%).
         na_drop_thresholds : dict, optional
-            Thresholds for dropping columns with high NA values. Default is {'string_columns': 0.20, 'numeric_columns': 0.50}.
+            Thresholds for dropping columns with high NA values. Default is {'string_columns': 0.10, 'numeric_columns': 0.50}.
         """
 
         self.df = None
