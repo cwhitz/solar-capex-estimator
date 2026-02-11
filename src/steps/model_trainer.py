@@ -23,7 +23,7 @@ class RFRTrainer:
             param_grid=self.param_grid,
             cv=5,
             scoring="neg_mean_absolute_error",
-            n_jobs=-1
+            n_jobs=1
         )
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
