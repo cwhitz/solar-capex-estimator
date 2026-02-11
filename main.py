@@ -11,6 +11,7 @@ from src.steps.data_loader import DataLoader
 from src.steps.feature_engineer import FeatureEngineer
 from src.steps.model_trainer import RFRTrainer
 from src.steps.preprocessor import TTSPreprocessor
+from src.steps.feature_reducer import FeatureReducer
 from src.utils.input_validation import validate_prediction_requests
 
 
@@ -39,15 +40,11 @@ class SolarCapexEstimator:
         cleaner.load_data(data)
         cleaned_data = cleaner.clean(config["model_features"]["target"])
 
-        # minimize engineered data to just features used in model
-        # ensure engineered features like 'days_since_2000' are retained
-        minimized_data = cleaned_data.filter(
-            items=config["model_features"]["features"]
-            + [config["model_features"]["target"]]
-        )
-
         # Init feature engineer
         feature_engineer = FeatureEngineer()
+
+        # Init feature reducer
+        feature_reducer = FeatureReducer(features_to_keep=config["model_features"]["features"])
 
         # Init preprocessor
         preprocessor = TTSPreprocessor()
@@ -56,11 +53,12 @@ class SolarCapexEstimator:
         trainer = RFRTrainer(
             feature_engineer=feature_engineer,
             preprocessor=preprocessor,
+            feature_reducer=feature_reducer,
             param_grid=config["hyperparameter_search"]["param_grid"],
         )
         self.model = trainer.train_new_model(
-            minimized_data.drop(columns=[config["model_features"]["target"]]),
-            minimized_data[config["model_features"]["target"]],
+            cleaned_data.drop(columns=[config["model_features"]["target"]]),
+            cleaned_data[config["model_features"]["target"]],
         )
 
         return self.model
