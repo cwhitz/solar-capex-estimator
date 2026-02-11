@@ -209,17 +209,12 @@ class SolarCapexEstimator:
         pd.DataFrame
             DataFrame with prediction features.
         """
-
-        df = pd.DataFrame(
+        return pd.DataFrame(
             [
                 request.model_dump() if hasattr(request, "model_dump") else request.dict()
                 for request in validated_requests
             ]
         )
-
-        df['days_since_2000'] = (pd.to_datetime(df['installation_date']) - pd.Timestamp("2000-01-01")).dt.days
-
-        return df
 
     def _predict_with_uncertainty(self, X):
         """
@@ -332,12 +327,12 @@ if __name__ == "__main__":
     estimator = SolarCapexEstimator()
 
     print("Training model...")
-    trained_model = estimator.train_model()
+    # trained_model = estimator.train_model()
 
-    trained_model_fp = estimator.save_model(trained_model)
-    print(f"Model trained and saved to {trained_model_fp}")
+    # trained_model_fp = estimator.save_model(trained_model)
+    # print(f"Model trained and saved to {trained_model_fp}")
 
-    # trained_model_fp = "./models/solar_capex_model_20260210_2231.pkl" 
+    trained_model_fp = "./models/solar_capex_model_20260210_2231.pkl"  # Update with actual path to your trained model
 
     print("Loading model...")
     estimator.load_model(trained_model_fp)
