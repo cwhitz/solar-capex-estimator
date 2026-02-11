@@ -201,6 +201,6 @@ class DataLoader:
             If dataframe has not been loaded.
         """
         if self.df is None:
-            raise ValueError("Data not loaded. Call load_raw() or load() first.")
+            raise ValueError("Data not loaded. Call load_training_data() first.")
 
         return self.df
