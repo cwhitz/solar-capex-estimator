@@ -206,7 +206,12 @@ class SolarCapexEstimator:
         pd.DataFrame
             DataFrame with prediction features.
         """
-        return pd.DataFrame([request.dict() for request in validated_requests])
+        return pd.DataFrame(
+            [
+                request.model_dump() if hasattr(request, "model_dump") else request.dict()
+                for request in validated_requests
+            ]
+        )
 
     def _predict_with_uncertainty(self, X):
         """
