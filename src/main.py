@@ -18,7 +18,7 @@ class SolarCapexEstimator:
     Class for estimating solar capital expenditures (CAPEX) using a machine learning pipeline.
 
     This class has four public methods:
-    - train_model: Trains the a Random Forest Regressor model using any data in the specified directory.
+    - train_model: Trains a Random Forest Regressor model using any data in the specified directory.
     - load_model: Loads a previously trained model from disk.
     - predict: Uses the trained model to make one or more predictions on new data.
     - predict_from_csv: Loads new data from a CSV file and makes predictions using the trained model.
