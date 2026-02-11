@@ -3,13 +3,14 @@ import json
 import joblib
 import numpy as np
 import pandas as pd
+import pprint
 
 from src.config import config
 from src.steps.data_cleaner import DataCleaner
 from src.steps.data_loader import DataLoader
 from src.steps.feature_engineer import FeatureEngineer
 from src.steps.model_trainer import RFRTrainer
-from src.steps.preprocessor import Preprocessor
+from src.steps.preprocessor import TTSPreprocessor
 from src.utils.input_validation import validate_prediction_requests
 
 
@@ -21,7 +22,6 @@ class SolarCapexEstimator:
     - train_model: Trains a Random Forest Regressor model using any data in the specified directory.
     - load_model: Loads a previously trained model from disk.
     - predict: Uses the trained model to make one or more predictions on new data.
-    - predict_from_csv: Loads new data from a CSV file and makes predictions using the trained model.
     """
 
     def __init__(self, data_directory="./data/raw"):
@@ -39,32 +39,28 @@ class SolarCapexEstimator:
         cleaner.load_data(data)
         cleaned_data = cleaner.clean(config["model_features"]["target"])
 
-        # Engineer features
-        engineer = FeatureEngineer()
-        engineer.load_data(cleaned_data)
-        engineered_data = engineer.engineer_features()
-
         # minimize engineered data to just features used in model
         # ensure engineered features like 'days_since_2000' are retained
-        engineered_extra_features = ["days_since_2000"]
-        engineered_data = engineered_data.filter(
+        minimized_data = cleaned_data.filter(
             items=config["model_features"]["features"]
-            + engineered_extra_features
             + [config["model_features"]["target"]]
         )
 
-        # Build preprocessor
-        preprocessor = Preprocessor(target_col=config["model_features"]["target"])
-        built_preprocessor = preprocessor.build_preprocessor(engineered_data)
+        # Init feature engineer
+        feature_engineer = FeatureEngineer()
+
+        # Init preprocessor
+        preprocessor = TTSPreprocessor()
 
         # Train model
         trainer = RFRTrainer(
-            preprocessor=built_preprocessor,
+            feature_engineer=feature_engineer,
+            preprocessor=preprocessor,
             param_grid=config["hyperparameter_search"]["param_grid"],
         )
         self.model = trainer.train_new_model(
-            engineered_data.drop(columns=[config["model_features"]["target"]]),
-            engineered_data[config["model_features"]["target"]],
+            minimized_data.drop(columns=[config["model_features"]["target"]]),
+            minimized_data[config["model_features"]["target"]],
         )
 
         return self.model
@@ -217,8 +213,6 @@ class SolarCapexEstimator:
             ]
         )
 
-        df['days_since_2000'] = (pd.to_datetime(df['installation_date']) - pd.Timestamp("2000-01-01")).dt.days
-
         return df
 
     def _predict_with_uncertainty(self, X):
@@ -265,7 +259,10 @@ class SolarCapexEstimator:
         confidence = self._calculate_confidence(prediction, uncertainty)
 
         return {
-            "prediction": round(float(prediction), 2),
+            "prediction": {
+                "total_spend" :round(float(prediction), 2),
+                "kW_per_dollar": round(float(prediction / X_row["PV_system_size_DC"].iloc[0]), 4)
+            },
             "uncertainty": round(float(uncertainty), 2),
             "confidence": round(float(confidence), 2),
         }
@@ -287,7 +284,7 @@ class SolarCapexEstimator:
         X_transformed = self.model.named_steps["preprocessor"].transform(X_row)
         return np.array(
             [
-                tree.predict(X_transformed)[0]
+                tree.predict(X_transformed.to_numpy())[0]
                 for tree in self.model.named_steps["model"].estimators_
             ]
         )
@@ -337,8 +334,6 @@ if __name__ == "__main__":
     trained_model_fp = estimator.save_model(trained_model)
     print(f"Model trained and saved to {trained_model_fp}")
 
-    # trained_model_fp = "./models/solar_capex_model_20260210_2231.pkl" 
-
     print("Loading model...")
     estimator.load_model(trained_model_fp)
 
@@ -349,4 +344,4 @@ if __name__ == "__main__":
     predictions = estimator.predict(prediction_requests)
 
     print("Predictions:")
-    print(predictions)
+    pprint.pprint(predictions)
