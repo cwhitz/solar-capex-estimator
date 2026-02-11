@@ -19,7 +19,8 @@ class FeatureEngineer:
     """
 
     def __init__(self):
-        pass
+        # Initialize dataframe attribute; it will be set by load_data().
+        self.df = None
 
     def load_data(self, df):
         """
