@@ -79,7 +79,8 @@ class FeatureEngineer:
         module_cols = [col for col in df.columns if "module_quantity" in col.lower()]
         df["total_module_count"] = df[module_cols].replace(np.nan, 0).sum(axis=1)
 
-        df = df.drop(columns=module_cols)
+        if module_cols:
+            df = df.drop(columns=module_cols)
 
         return df
 
