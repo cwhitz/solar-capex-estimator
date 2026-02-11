@@ -55,16 +55,16 @@ class SolarCapexEstimator:
         built_preprocessor = preprocessor.build_preprocessor(engineered_data)
 
         # Train model
-        self.model = RFRTrainer(
+        trainer = RFRTrainer(
             preprocessor=built_preprocessor,
             param_grid=config["hyperparameter_search"]["param_grid"],
         )
-        pipeline = self.model.train_new_model(
+        self.model = trainer.train_new_model(
             engineered_data.drop(columns=[config["model_features"]["target"]]),
             engineered_data[config["model_features"]["target"]],
         )
 
-        return pipeline
+        return self.model
 
     def save_model(self, pipeline, filename=None):
         """
