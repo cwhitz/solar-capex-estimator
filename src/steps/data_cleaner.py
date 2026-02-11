@@ -208,7 +208,7 @@ class DataCleaner:
         """
         id_cols = ["data_provider_1", "data_provider_2", "system_ID_1", "system_ID_2"]
         print(f"> Dropping ID and provider columns: {id_cols}")
-        df = df.drop(columns=id_cols)
+        df = df.drop(columns=id_cols, errors="ignore")
 
         return df
 
