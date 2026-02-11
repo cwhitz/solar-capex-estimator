@@ -3,6 +3,7 @@ import json
 import joblib
 import numpy as np
 import pandas as pd
+import pprint
 
 from src.config import config
 from src.steps.data_cleaner import DataCleaner
@@ -21,7 +22,6 @@ class SolarCapexEstimator:
     - train_model: Trains a Random Forest Regressor model using any data in the specified directory.
     - load_model: Loads a previously trained model from disk.
     - predict: Uses the trained model to make one or more predictions on new data.
-    - predict_from_csv: Loads new data from a CSV file and makes predictions using the trained model.
     """
 
     def __init__(self, data_directory="./data/raw"):
@@ -259,7 +259,10 @@ class SolarCapexEstimator:
         confidence = self._calculate_confidence(prediction, uncertainty)
 
         return {
-            "prediction": round(float(prediction), 2),
+            "prediction": {
+                "total_spend" :round(float(prediction), 2),
+                "kW_per_dollar": round(float(prediction / X_row["PV_system_size_DC"].iloc[0]), 4)
+            },
             "uncertainty": round(float(uncertainty), 2),
             "confidence": round(float(confidence), 2),
         }
@@ -325,13 +328,11 @@ class SolarCapexEstimator:
 if __name__ == "__main__":
     estimator = SolarCapexEstimator()
 
-    # print("Training model...")
-    # trained_model = estimator.train_model()
+    print("Training model...")
+    trained_model = estimator.train_model()
 
-    # trained_model_fp = estimator.save_model(trained_model)
-    # print(f"Model trained and saved to {trained_model_fp}")
-
-    trained_model_fp = "./models/solar_capex_model_20260210_2231.pkl" 
+    trained_model_fp = estimator.save_model(trained_model)
+    print(f"Model trained and saved to {trained_model_fp}")
 
     print("Loading model...")
     estimator.load_model(trained_model_fp)
@@ -343,4 +344,4 @@ if __name__ == "__main__":
     predictions = estimator.predict(prediction_requests)
 
     print("Predictions:")
-    print(predictions)
+    pprint.pprint(predictions)
