@@ -1,10 +1,3 @@
-"""
-Input validation for Solar CAPEX Estimator using Pydantic.
-
-This module provides validation models for prediction requests to ensure
-data quality and type safety before making predictions.
-"""
-
 from datetime import datetime
 from typing import List, Union
 
@@ -28,16 +21,6 @@ class PredictionRequest(BaseModel):
         Total number of solar modules. Must be positive integer.
     installation_date : Union[str, datetime]
         Installation date. Can be string (YYYY-MM-DD) or datetime object.
-
-    Examples
-    --------
-    >>> request = PredictionRequest(
-    ...     PV_system_size_DC=100.5,
-    ...     state='CA',
-    ...     utility_service_territory='Pacific Gas & Electric Co',
-    ...     total_module_count=300,
-    ...     installation_date='2023-06-15'
-    ... )
     """
 
     PV_system_size_DC: float = Field(
@@ -116,19 +99,6 @@ def validate_prediction_requests(requests: List[dict]) -> List[PredictionRequest
     ------
     ValueError
         If any request fails validation with details about which request failed.
-
-    Examples
-    --------
-    >>> requests = [
-    ...     {
-    ...         'PV_system_size_DC': 100.5,
-    ...         'state': 'CA',
-    ...         'utility_service_territory': 'PG&E',
-    ...         'total_module_count': 300,
-    ...         'installation_date': '2023-06-15'
-    ...     }
-    ... ]
-    >>> validated = validate_prediction_requests(requests)
     """
     validated_requests = []
 
