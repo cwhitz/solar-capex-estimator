@@ -1,34 +1,68 @@
-"""Preprocessing module for solar CAPEX estimation model."""
-
 import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, TargetEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler, TargetEncoder
+
+from typing import Optional
 
 
-class Preprocessor:
+class TTSPreprocessor(BaseEstimator, TransformerMixin):
     """
     Preprocessor for our Capex solar cost estimation model.
+    sklearn-compatible transformer.
     """
 
-    def __init__(self, target_col="total_installed_price"):
-        """Initialize the Preprocessor with configuration parameters."""
-        self.target_col = target_col
-        self.columns = None
-
+    def __init__(self):
+        self.column_dict = None
         self.preprocessor = None
 
-    def _sort_columns(self, df: pd.DataFrame):
-        """Sort columns into numerical, binary, low-cardinality categorical, and high-cardinality categorical based on datatypes and unique value counts.
+    def fit(self, X: pd.DataFrame, y: pd.Series):
+        """
+        Determine column types and fit the preprocessing pipeline.
+        """
+        df = X.copy()
 
+        self._sort_columns(df=X, target_col=y.name if y is not None else None)
+        self._build_preprocessor()
+
+        # Fit underlying column transformer
+        if self.preprocessor is not None:
+            if y is not None:
+                self.preprocessor.fit(df, y)
+            else:
+                self.preprocessor.fit(df)
+
+        return self
+
+    def transform(self, X: pd.DataFrame):
+        """
+        Apply preprocessing.
+        """
+        if self.preprocessor is None:
+            raise ValueError("Preprocessor not fitted. Call fit() first.")
+
+        return self.preprocessor.transform(X)
+
+    def get_feature_names(self):
+        """Get feature names after preprocessing."""
+        if self.preprocessor is None:
+            raise ValueError("Preprocessor not built. Must be fit to data first.")
+        return self.preprocessor.get_feature_names_out()
+
+    def _sort_columns(self, df: pd.DataFrame, target_col: Optional[str]):
+        """Sort columns into types.
+        
         Parameters
         ----------
         df : pd.DataFrame
-            Dataframe to use for determining column types.
+            Dataframe to analyze column types from.
+        target_col : str, optional
+            Name of the target column. If None, no column will be treated as target.
         """
-        self.columns = dict(
-            target_col=self.target_col,
+        self.column_dict = dict(
+            target_col=target_col,
             num_cols=[],
             binary_cols=[],
             cat_low_card_cols=[],
@@ -36,39 +70,23 @@ class Preprocessor:
         )
 
         for col in df.columns:
-            if col == self.columns["target_col"]:
+            if col == self.column_dict["target_col"]:
                 continue
             elif df[col].dtype in ["int64", "float64"]:
-                self.columns["num_cols"].append(col)
-            elif (df[col].dtype == "bool") or (df[col].dtype == "object" and df[col].nunique() == 2):
-                self.columns["binary_cols"].append(col)
+                self.column_dict["num_cols"].append(col)
+            elif (
+                df[col].dtype == "bool"
+                or (df[col].dtype == "object" and df[col].nunique() == 2)
+            ):
+                self.column_dict["binary_cols"].append(col)
             elif df[col].dtype in ["str", "object", "category"]:
                 if df[col].nunique() < 10:
-                    self.columns["cat_low_card_cols"].append(col)
+                    self.column_dict["cat_low_card_cols"].append(col)
                 else:
-                    self.columns["cat_high_card_cols"].append(col)
+                    self.column_dict["cat_high_card_cols"].append(col)
 
-    def get_feature_names(self):
-        """Get feature names after preprocessing"""
-        if self.preprocessor is None:
-            raise ValueError("Preprocessor not built. Must be fit to data first.")
-        return self.preprocessor.get_feature_names_out()
-
-    def build_preprocessor(self, df):
-        """
-        Build the preprocessing pipeline based on the dataframe's columns and datatypes.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Dataframe to use for determining column types and building the preprocessor.
-
-        Returns
-        -------
-        ColumnTransformer
-            The built preprocessing pipeline.
-        """
-        self._sort_columns(df)
+    def _build_preprocessor(self):
+        """Build the column transformer in four parts: low-cardinality categorical, high-cardinality categorical, binary, and numeric."""
 
         low_card_pipeline = Pipeline(
             steps=[
@@ -88,7 +106,17 @@ class Preprocessor:
         ).set_output(transform="pandas")
 
         binary_pipeline = Pipeline(
-            steps=[("imputer", SimpleImputer(strategy="most_frequent"))]
+            steps=[
+                ("imputer", SimpleImputer(strategy="most_frequent")),
+                (
+                    "encoder",
+                    OneHotEncoder(
+                        drop="if_binary",
+                        handle_unknown="ignore",
+                        sparse_output=False,
+                    ),
+                ),
+            ]
         ).set_output(transform="pandas")
 
         num_pipeline = Pipeline(
@@ -100,16 +128,10 @@ class Preprocessor:
 
         self.preprocessor = ColumnTransformer(
             transformers=[
-                ("cat_low_card", low_card_pipeline, self.columns["cat_low_card_cols"]),
-                (
-                    "cat_high_card",
-                    high_card_pipeline,
-                    self.columns["cat_high_card_cols"],
-                ),
-                ("binary", binary_pipeline, self.columns["binary_cols"]),
-                ("num", num_pipeline, self.columns["num_cols"]),
+                ("cat_low_card", low_card_pipeline, self.column_dict["cat_low_card_cols"]),
+                ("cat_high_card", high_card_pipeline, self.column_dict["cat_high_card_cols"]),
+                ("binary", binary_pipeline, self.column_dict["binary_cols"]),
+                ("num", num_pipeline, self.column_dict["num_cols"]),
             ],
             remainder="drop",
         ).set_output(transform="pandas")
-
-        return self.preprocessor
