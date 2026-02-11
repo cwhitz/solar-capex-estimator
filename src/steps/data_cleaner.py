@@ -240,8 +240,6 @@ class DataCleaner:
         ----------
         target_col : str, optional
             Target column to clean. Default is 'total_installed_price'.
-        min_target_value : float, optional
-            Minimum valid target value. Default is 10.
 
         Returns
         -------
