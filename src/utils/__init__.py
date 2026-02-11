@@ -7,8 +7,6 @@ This package contains helper functions for model persistence and input validatio
 from .input_validation import PredictionRequest, validate_prediction_requests
 
 __all__ = [
-    "load_pipeline",
-    "save_pipeline",
     "PredictionRequest",
     "validate_prediction_requests",
 ]
