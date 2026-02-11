@@ -30,7 +30,7 @@ class SolarCapexEstimator:
 
     def train_model(self):
         # Load data
-        tts_dataloader = DataLoader(tts_data_directory="./data/raw")
+        tts_dataloader = DataLoader(tts_data_directory=self.data_directory)
         tts_dataloader.load_training_data(**config["loading"])
         data = tts_dataloader.get_data()
 
