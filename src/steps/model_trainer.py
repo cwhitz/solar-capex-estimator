@@ -7,12 +7,18 @@ import joblib
 
 from .preprocessor import TTSPreprocessor
 from .feature_engineer import FeatureEngineer
+from .feature_reducer import FeatureReducer
 
 class RFRTrainer:
-    def __init__(self, param_grid: dict, preprocessor: TTSPreprocessor, feature_engineer: FeatureEngineer):
+    def __init__(self, param_grid: dict, preprocessor: TTSPreprocessor, feature_engineer: FeatureEngineer, feature_reducer: FeatureReducer):
         self.param_grid = param_grid
+        self.preprocessor = preprocessor
+        self.feature_engineer = feature_engineer
+        self.feature_reducer = feature_reducer
+        
         self.model_pipeline = Pipeline([
                 ("feature_engineering", feature_engineer),
+                ("feature_reducer", feature_reducer),
                 ("preprocessor", preprocessor),
                 ("model", RandomForestRegressor(random_state=42, n_estimators=100, max_depth=9))
             ])
@@ -37,7 +43,9 @@ class RFRTrainer:
         print("Evaluating best model on test set...")
         
         train_pipeline = Pipeline([
-                ("preprocessor", self.model_pipeline.named_steps["preprocessor"]),
+                ("feature_engineering", self.feature_engineer),
+                ("feature_reducer", self.feature_reducer),
+                ("preprocessor", self.preprocessor),
                 ("model", RandomForestRegressor(random_state=42, **{k.replace('model__', ''): v for k, v in grid.best_params_.items()}))
             ])
         train_pipeline.fit(X_train, y_train)
@@ -50,7 +58,9 @@ class RFRTrainer:
         best_params = grid.best_params_
 
         best_model = Pipeline([
-                ("preprocessor", self.model_pipeline.named_steps["preprocessor"]),
+                ("feature_engineering", self.feature_engineer),
+                ("feature_reducer", self.feature_reducer),
+                ("preprocessor", self.preprocessor),
                 ("model", RandomForestRegressor(random_state=42, **{k.replace('model__', ''): v for k, v in best_params.items()}))
             ])
         

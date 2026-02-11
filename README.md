@@ -111,19 +111,12 @@ The uncertainty estimate (tree variance) provides a proxy for epistemic uncertai
 **Short-term (engineering)**:
 - **API layer**: FastAPI wrapper with `/predict` and `/health` endpoints
 - **Logging**: Structured logs for predictions, validation failures, model versions
-- **Monitoring**: Track prediction distributions, error rates, feature drift
 - **Docker**: Containerized deployment with pinned dependencies (`requirements.txt`)
 
-**Medium-term (modeling)**:
-- **Automated retraining**: Monthly pipeline triggered by new TTS data releases
-- **Prediction intervals**: Bootstrap-based confidence intervals for better uncertainty quantification
-- **Cost breakdown**: Multi-output model predicting equipment/labor/permitting separately
-- **Explainability**: SHAP values for individual predictions ("system size drove 82% of estimate")
-
 **Long-term (architecture)**:
-- **Ensemble models**: Combine Random Forest + Gradient Boosting for improved accuracy
-- **Online learning**: Incremental updates as new installations arrive
-- **Geographic expansion**: Expand beyond commercial to residential/industrial segments
+- **Monitoring**: Track prediction distributions, error rates, feature drift
+- **Explainability**: SHAP values for individual predictions ("system size drove 82% of estimate")
+- **Automated retraining**: Monthly pipeline triggered by new TTS data releases
 - **Feature store**: Centralize feature engineering for consistency across models
 
 ---
