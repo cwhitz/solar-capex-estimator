@@ -40,7 +40,7 @@ class Preprocessor:
                 continue
             elif df[col].dtype in ["int64", "float64"]:
                 self.columns["num_cols"].append(col)
-            elif df[col].dtype == "bool" or (df[col].nunique() == 2):
+            elif (df[col].dtype == "bool") or (df[col].dtype == "object" and df[col].nunique() == 2):
                 self.columns["binary_cols"].append(col)
             elif df[col].dtype in ["str", "object", "category"]:
                 if df[col].nunique() < 10:
