@@ -1,11 +1,11 @@
+from typing import Optional
+
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import OneHotEncoder, StandardScaler, TargetEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-
-from typing import Optional
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, TargetEncoder
 
 
 class TTSPreprocessor(BaseEstimator, TransformerMixin):
@@ -53,7 +53,7 @@ class TTSPreprocessor(BaseEstimator, TransformerMixin):
 
     def _sort_columns(self, df: pd.DataFrame, target_col: Optional[str]):
         """Sort columns into types.
-        
+
         Parameters
         ----------
         df : pd.DataFrame
@@ -74,9 +74,8 @@ class TTSPreprocessor(BaseEstimator, TransformerMixin):
                 continue
             elif df[col].dtype in ["int64", "float64"]:
                 self.column_dict["num_cols"].append(col)
-            elif (
-                df[col].dtype == "bool"
-                or (df[col].dtype == "object" and df[col].nunique() == 2)
+            elif df[col].dtype == "bool" or (
+                df[col].dtype == "object" and df[col].nunique() == 2
             ):
                 self.column_dict["binary_cols"].append(col)
             elif df[col].dtype in ["str", "object", "category"]:
@@ -128,8 +127,16 @@ class TTSPreprocessor(BaseEstimator, TransformerMixin):
 
         self.preprocessor = ColumnTransformer(
             transformers=[
-                ("cat_low_card", low_card_pipeline, self.column_dict["cat_low_card_cols"]),
-                ("cat_high_card", high_card_pipeline, self.column_dict["cat_high_card_cols"]),
+                (
+                    "cat_low_card",
+                    low_card_pipeline,
+                    self.column_dict["cat_low_card_cols"],
+                ),
+                (
+                    "cat_high_card",
+                    high_card_pipeline,
+                    self.column_dict["cat_high_card_cols"],
+                ),
                 ("binary", binary_pipeline, self.column_dict["binary_cols"]),
                 ("num", num_pipeline, self.column_dict["num_cols"]),
             ],

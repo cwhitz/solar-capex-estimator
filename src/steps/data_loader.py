@@ -3,6 +3,7 @@ from typing import List, Optional
 
 import pandas as pd
 
+
 class DataLoader:
     """
     Data loader for LBNL Tracking the Sun dataset.
@@ -31,8 +32,18 @@ class DataLoader:
         self.tts_data_directory = Path(tts_data_directory)
         self.df = None
 
-        self.valid_customer_segments = ['COM', 'RES_MF', 'RES_SF', 'RES', 'AGRICULTURAL',
-       'OTHER TAX-EXEMPT', 'GOV', 'SCHOOL', 'NON-RES', 'NON-PROFIT']
+        self.valid_customer_segments = [
+            "COM",
+            "RES_MF",
+            "RES_SF",
+            "RES",
+            "AGRICULTURAL",
+            "OTHER TAX-EXEMPT",
+            "GOV",
+            "SCHOOL",
+            "NON-RES",
+            "NON-PROFIT",
+        ]
 
     def _filter_by_years(self, df, year_min=None, year_max=None):
         """
@@ -75,8 +86,8 @@ class DataLoader:
         pd.DataFrame
             Filtered dataframe.
         """
-        
-        df = df[df['customer_segment'].isin(segments)]
+
+        df = df[df["customer_segment"].isin(segments)]
 
         return df
 
@@ -102,17 +113,20 @@ class DataLoader:
             raise ValueError("year_min cannot be greater than year_max.")
 
         if customer_segments is not None:
-            if not isinstance(customer_segments, list) or not all(isinstance(seg, str) for seg in customer_segments):
+            if not isinstance(customer_segments, list) or not all(
+                isinstance(seg, str) for seg in customer_segments
+            ):
                 raise ValueError("customer_segments must be a list of strings.")
             if not set(customer_segments).issubset(set(self.valid_customer_segments)):
-                raise ValueError(f"customer_segments must be a subset of {self.valid_customer_segments}.")
-
+                raise ValueError(
+                    f"customer_segments must be a subset of {self.valid_customer_segments}."
+                )
 
     def load_training_data(
         self,
         year_min: Optional[int] = None,
         year_max: Optional[int] = None,
-        customer_segments: Optional[List[str]] = None
+        customer_segments: Optional[List[str]] = None,
     ):
         """
         Load and filter TTS data with common preprocessing steps.
@@ -132,14 +146,16 @@ class DataLoader:
             Filtered and cleaned dataframe.
         """
 
-        csvs = list(self.tts_data_directory.glob('*.csv'))
+        csvs = list(self.tts_data_directory.glob("*.csv"))
 
         self._validate_filters(year_min, year_max, customer_segments)
 
         if csvs:
             self.df = pd.DataFrame()
             for csv in csvs:
-                csv_df = pd.read_csv(csv, parse_dates=['installation_date'], low_memory=False)
+                csv_df = pd.read_csv(
+                    csv, parse_dates=["installation_date"], low_memory=False
+                )
 
                 if year_min is not None or year_max is not None:
                     csv_df = self._filter_by_years(csv_df, year_min, year_max)
@@ -151,8 +167,9 @@ class DataLoader:
                 print(f"Loaded {len(csv_df)} rows from {csv.name}")
 
         else:
-            raise ValueError(f"No CSV files found in directory {self.tts_data_directory}")
-
+            raise ValueError(
+                f"No CSV files found in directory {self.tts_data_directory}"
+            )
 
     def get_data(self):
         """

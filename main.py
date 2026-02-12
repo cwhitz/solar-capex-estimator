@@ -1,17 +1,17 @@
 import json
+import pprint
 
 import joblib
 import numpy as np
 import pandas as pd
-import pprint
 
 from src.config import config
 from src.steps.data_cleaner import DataCleaner
 from src.steps.data_loader import DataLoader
 from src.steps.feature_engineer import FeatureEngineer
+from src.steps.feature_reducer import FeatureReducer
 from src.steps.model_trainer import RFRTrainer
 from src.steps.preprocessor import TTSPreprocessor
-from src.steps.feature_reducer import FeatureReducer
 from src.utils.input_validation import validate_prediction_requests
 
 
@@ -44,7 +44,9 @@ class SolarCapexEstimator:
         feature_engineer = FeatureEngineer()
 
         # Init feature reducer
-        feature_reducer = FeatureReducer(features_to_keep=config["model_features"]["features"])
+        feature_reducer = FeatureReducer(
+            features_to_keep=config["model_features"]["features"]
+        )
 
         # Init preprocessor
         preprocessor = TTSPreprocessor()
@@ -206,7 +208,11 @@ class SolarCapexEstimator:
 
         df = pd.DataFrame(
             [
-                request.model_dump() if hasattr(request, "model_dump") else request.dict()
+                (
+                    request.model_dump()
+                    if hasattr(request, "model_dump")
+                    else request.dict()
+                )
                 for request in validated_requests
             ]
         )
@@ -258,8 +264,10 @@ class SolarCapexEstimator:
 
         return {
             "prediction": {
-                "total_spend" :round(float(prediction), 2),
-                "kW_per_dollar": round(float(prediction / X_row["PV_system_size_DC"].iloc[0]), 4)
+                "total_spend": round(float(prediction), 2),
+                "kW_per_dollar": round(
+                    float(prediction / X_row["PV_system_size_DC"].iloc[0]), 4
+                ),
             },
             "uncertainty": round(float(uncertainty), 2),
             "confidence": round(float(confidence), 2),
